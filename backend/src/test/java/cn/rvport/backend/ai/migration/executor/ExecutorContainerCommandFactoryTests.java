@@ -18,8 +18,8 @@ class ExecutorContainerCommandFactoryTests {
     @Test
     void run命令包含全部契约要素() {
         Map<String, String> env = new LinkedHashMap<>();
-        env.put("WXAI_API_KEY", "secret-value");
-        env.put("WXAI_MODEL", "demo-model");
+        env.put("API_KEY", "secret-value");
+        env.put("MODEL", "demo-model");
         env.put("AI_MIGRATION_PROMPT_FILE", "/app/.prompt.txt");
 
         List<String> command = ExecutorContainerCommandFactory.runCommand(
@@ -33,8 +33,8 @@ class ExecutorContainerCommandFactoryTests {
         assertThat(String.join(" ", command))
                 .contains("--name rvport-executor-11111111-2222-3333-4444-555555555555")
                 .contains("/tmp/ws:/app")
-                .contains("-e WXAI_API_KEY=secret-value")
-                .contains("-e WXAI_MODEL=demo-model")
+                .contains("-e API_KEY=secret-value")
+                .contains("-e MODEL=demo-model")
                 .contains("-e http_proxy=")
                 .contains("-e https_proxy=")
                 .endsWith("rvport-ai-executor:local");

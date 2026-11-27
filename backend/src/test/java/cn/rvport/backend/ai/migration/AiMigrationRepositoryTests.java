@@ -238,4 +238,52 @@ class AiMigrationRepositoryTests {
             db.verifyComplete();
         }
     }
+
+    @Test
+    void 报告绑定反查命中与未命中() throws Exception {
+        try (var db = new JooqMockDatabase()) {
+            var repository = new AiMigrationRepository(db.dsl(), mapper);
+            UUID reportId = UUID.randomUUID();
+            var field = org.jooq.impl.DSL.field("report_id", UUID.class);
+            db.enqueueResult(db.result(new Field<?>[]{field}, new Object[][]{}));
+            assertThat(repository.reportIdOf(runId)).isEmpty();
+            db.enqueueResult(db.result(new Field<?>[]{field}, new Object[][]{{reportId}}));
+            assertThat(repository.reportIdOf(runId)).contains(reportId);
+            db.verifyComplete();
+        }
+    }
+
+    @Test
+    void 报告条目读取解析jsonb并容错() throws Exception {
+        try (var db = new JooqMockDatabase()) {
+            var repository = new AiMigrationRepository(db.dsl(), mapper);
+            UUID reportId = UUID.randomUUID();
+            var field = org.jooq.impl.DSL.field("original_snapshot", org.jooq.JSONB.class);
+            var good = org.jooq.JSONB.valueOf("{\"evidence\":{\"scannerFindingId\":\"f1\"},\"title\":\"t\"}");
+            db.enqueueResult(db.result(new Field<?>[]{field}, new Object[][]{{good}, {org.jooq.JSONB.valueOf("null")}}));
+            var items = repository.reportItemsFor(reportId);
+            assertThat(items).hasSize(2);
+            assertThat(items.get(0).get("originalSnapshot"))
+                    .isEqualTo(Map.of("evidence", Map.of("scannerFindingId", "f1"), "title", "t"));
+            assertThat(items.get(1)).containsEntry("originalSnapshot", null);
+            // 非 JSONB 实例（如 String）：条目仍返回（原样透传不含 originalSnapshot 键）
+            var plain = org.jooq.impl.DSL.field("original_snapshot", String.class);
+            db.enqueueResult(db.result(new Field<?>[]{plain}, new Object[][]{{"not-jsonb"}}));
+            assertThat(repository.reportItemsFor(reportId)).hasSize(1);
+            db.verifyComplete();
+        }
+    }
+
+    @Test
+    void 视图工厂对空计数与空摘要的兜底() {
+        var record = new cn.rvport.backend.jooq.tables.records.AiMigrationRunsRecord();
+        record.setId(runId); record.setProjectId(project); record.setTaskId(taskId);
+        record.setScanRunId(scanRun); record.setStatus("PENDING");
+        var view = AiMigrationRunView.from(record, revision, null);
+        assertThat(view.summary()).isEmpty();
+        assertThat(view.itemCount()).isZero();
+        assertThat(view.doneCount()).isZero();
+        assertThat(view.falsePositiveCount()).isZero();
+        assertThat(view.pendingCount()).isZero();
+    }
 }

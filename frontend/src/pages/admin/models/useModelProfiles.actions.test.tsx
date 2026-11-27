@@ -63,7 +63,6 @@ describe('model profile actions', () => {
     expect(api.createModelProfile.mock.calls[0][0]).toMatchObject({
       name: 'New Profile',
       enabled: true,
-      executablePath: 'codex',
       wireApi: 'RESPONSES',
       baseUrl: '',
       model: '',

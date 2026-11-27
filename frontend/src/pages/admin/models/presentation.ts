@@ -10,6 +10,11 @@ import type { ModelStagePresentation } from './types'
 import styles from './index.module.scss'
 export const modelStages: ModelStagePresentation[] = [
   {
+    readyText: 'AI 迁移可用',
+    stage: 'AI_MIGRATION',
+    title: 'AI 迁移'
+  },
+  {
     readyText: '测试结果比较可用',
     stage: 'TEST_LOG_COMPARE',
     title: '测试结果比较'

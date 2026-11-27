@@ -90,7 +90,6 @@ export function useModelProfiles(tableRef: RefObject<BaseTableHandle | null>) {
         apiKey: values.apiKey ?? '',
         baseUrl: values.baseUrl ?? '',
         enabled: values.enabled ?? true,
-        executablePath: values.executablePath ?? 'codex',
         maxRuntimeSeconds: values.maxRuntimeSeconds,
         model: values.model ?? '',
         modelProviderType: 'OPENAI_COMPATIBLE',

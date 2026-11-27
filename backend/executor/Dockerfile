@@ -47,7 +47,7 @@ RUN npm config set registry "${NPM_REGISTRY}" \
     && npm cache clean --force
 
 # wxai provider 扩展（env 引用 key，不落盘）
-COPY backend/executor/wxai-provider.mjs /root/.pi/agent/extensions/wxai-provider.mjs
+COPY backend/executor/model-provider.mjs /root/.pi/agent/extensions/model-provider.mjs
 
 # 迁移技能构建期经 git 获取（不再随源码入库）：浅克隆默认分支最新提交 → 去 .git 与运行产物。
 # SKILLS_* 模板化（内网可换镜像仓库）：SKILLS_REVISION 缺省取远端默认分支最新（每次重建拉新代码）；

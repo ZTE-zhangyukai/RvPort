@@ -271,7 +271,7 @@ public class AiMigrationRuntimeService {
         };
     }
 
-    private TaskExecutionException translate(IOException ex) {
+    TaskExecutionException translate(IOException ex) {
         String message = ex.getMessage() == null ? "" : ex.getMessage();
         return switch (message) {
             case "AI_MIGRATION_MODEL_NOT_CONFIGURED" -> new TaskExecutionException(

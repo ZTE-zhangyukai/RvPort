@@ -141,4 +141,20 @@ class AiMigrationResultValidatorTests {
         assertThat(result.entries().stream().filter(e -> e.id().equals("b")).findFirst().orElseThrow().files()).containsExactly("b.c");
         assertThat(result.entries().stream().filter(e -> e.id().equals("c")).findFirst().orElseThrow().files()).containsExactly("a.c");
     }
+
+    @Test
+    void changeSummary空白时回退到summary字段() throws Exception {
+        var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        // changeSummary 为空白 → 回退到 summary 同义字段
+        var json = mapper.readTree(mapper.writeValueAsString(java.util.Map.of("entries", java.util.List.of(
+                java.util.Map.of("id", "a", "status", "DONE", "changeSummary", "  ", "summary", "fallback text")))));
+        var result = AiMigrationResultValidator.validate(java.util.List.of("a"), json);
+        assertThat(result.entries().get(0).changeSummary()).isEqualTo("fallback text");
+
+        // 两者都空白 → changeSummary 为 null
+        var bothBlank = mapper.readTree(mapper.writeValueAsString(java.util.Map.of("entries", java.util.List.of(
+                java.util.Map.of("id", "b", "status", "NO_WORK_NEEDED", "changeSummary", "  ", "summary", "  ")))));
+        var result2 = AiMigrationResultValidator.validate(java.util.List.of("b"), bothBlank);
+        assertThat(result2.entries().get(0).changeSummary()).isNull();
+    }
 }

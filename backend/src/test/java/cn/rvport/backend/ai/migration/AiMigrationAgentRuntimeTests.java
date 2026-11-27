@@ -522,18 +522,20 @@ class AiMigrationAgentRuntimeTests {
     }
 
     @Test
-    void 非条目文件改动被范围守卫拒绝() throws Exception {
+    void 非条目文件改动仅告警不阻断() throws Exception {
         prepareSource();
         when(adapter.run(any())).thenAnswer(invocation -> {
             var request = invocation.getArgument(0, AgentRuntimeExecutionRequest.class);
             runSuccessfulAgent(request.workspace());
-            // agent 越界：修改条目范围外的文件 → 拒绝运行且不产出补丁
+            // 真实迁移天然会改构建配置/新建文件：越界改动记告警但正常运行
             Files.writeString(request.workspace().resolve("source/Makefile"), "all:\n\ttrue\n");
             return new CodexProcessResult(0, false, "DONE", "");
         });
-        assertThatThrownBy(() -> service.run(projection(), sourceRoot, selection, context))
-                .isInstanceOf(java.io.IOException.class)
-                .hasMessageContaining("AI_MIGRATION_DIFF_SCOPE_VIOLATED");
+        var executed = service.run(projection(), sourceRoot, selection, context);
+        assertThat(new String(executed.diffPatch(), java.nio.charset.StandardCharsets.UTF_8))
+                .contains("Makefile");
+        verify(context).log(org.mockito.ArgumentMatchers.eq(cn.rvport.backend.task.TaskLogType.STDOUT),
+                org.mockito.ArgumentMatchers.contains("AI_MIGRATION_DIFF_SCOPE_NOTE"));
     }
 
     @Test
@@ -553,6 +555,15 @@ class AiMigrationAgentRuntimeTests {
                 new CodexProviderResolvedConfig(true, "opencode", CodexProviderType.OPENAI_COMPATIBLE,
                         "http://mock.invalid", "fixture", CodexProviderWireApi.CHAT, " ", 10, 1800));
         when(models.resolveExecution(actor, project, profileId, runtimeId)).thenReturn(noKey);
+        assertThatThrownBy(() -> service.run(projection(), sourceRoot, selection, context))
+                .isInstanceOf(java.io.IOException.class)
+                .hasMessageContaining("AI_MIGRATION_MODEL_NOT_CONFIGURED");
+        verify(adapter, never()).run(any());
+        // 模型名缺失：同样快速失败
+        var noModel = new AgentModelRuntimeConfig(new AgentRuntimesRecord(), new ModelProfilesRecord(),
+                new CodexProviderResolvedConfig(true, "opencode", CodexProviderType.OPENAI_COMPATIBLE,
+                        "http://mock.invalid", " ", CodexProviderWireApi.CHAT, "k", 10, 1800));
+        when(models.resolveExecution(actor, project, profileId, runtimeId)).thenReturn(noModel);
         assertThatThrownBy(() -> service.run(projection(), sourceRoot, selection, context))
                 .isInstanceOf(java.io.IOException.class)
                 .hasMessageContaining("AI_MIGRATION_MODEL_NOT_CONFIGURED");

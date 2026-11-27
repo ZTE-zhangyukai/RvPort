@@ -106,9 +106,9 @@ class AiMigrationAgentRuntimeContainerTests {
                     assertThat(Files.readString(workerWs.resolve(".prompt.txt"))).contains("RvPort AI 迁移任务");
                     @SuppressWarnings("unchecked")
                     Map<String, String> env = invocation.getArgument(3);
-                    assertThat(env).containsEntry("WXAI_API_KEY", "fake-key")
-                            .containsEntry("WXAI_MODEL", "fixture-model")
-                            .containsEntry("WXAI_BASE_URL", "http://mock.invalid/v1");
+                    assertThat(env).containsEntry("API_KEY", "fake-key")
+                            .containsEntry("MODEL", "fixture-model")
+                            .containsEntry("BASE_URL", "http://mock.invalid/v1");
                     // manifest 的 sourceRoot 为相对路径（容器内 /app 语义）
                     assertThat(Files.readString(workerWs.resolve("input/manifest.json"))).contains("\"sourceRoot\" : \"source\"");
                     // 写出的条目文件按技能协议组织，路径是执行器容器内能直接打开的位置（工作区挂载在 /app）

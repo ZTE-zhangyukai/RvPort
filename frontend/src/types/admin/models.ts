@@ -1,6 +1,6 @@
 export type ModelProviderType = 'OPENAI_COMPATIBLE'
 export type ModelWireApi = 'CHAT' | 'RESPONSES'
-export type ModelProfileStage = 'KB_AI_EXTENSION' | 'TEST_LOG_COMPARE'
+export type ModelProfileStage = 'AI_MIGRATION' | 'KB_AI_EXTENSION' | 'TEST_LOG_COMPARE'
 export type ModelProfileConnectivityStatus = 'SUCCESS' | 'FAILED' | 'TIMEOUT'
 export type ModelProfileAgentProbeStatus = 'SUCCESS' | 'FAILED' | 'TIMEOUT'
 export type ModelProfileAgentProbeRunStatus =
@@ -98,7 +98,6 @@ export interface ModelProfilePayload {
   apiKey?: string
   baseUrl?: string
   enabled?: boolean
-  executablePath?: string
   maxRuntimeSeconds?: number
   model?: string
   modelProviderType?: ModelProviderType

@@ -69,7 +69,7 @@ class ExecutorContainerServiceTests {
         StubCli cli = new StubCli();
         var service = new ExecutorContainerService(new ExecutorContainerProperties(null, Duration.ofMinutes(1)), cli);
 
-        var result = service.execute(TASK, Path.of("/tmp/ws"), Map.of("WXAI_API_KEY", "k"),
+        var result = service.execute(TASK, Path.of("/tmp/ws"), Map.of("API_KEY", "k"),
                 ExecutorContainerService.CancellationToken.none());
 
         assertThat(result.succeeded()).isTrue();

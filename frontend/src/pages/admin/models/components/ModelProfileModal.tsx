@@ -8,7 +8,6 @@ interface ModelProfileFormValues {
   apiKey?: string
   baseUrl: string
   enabled: boolean
-  executablePath: string
   maxRuntimeSeconds?: number
   model: string
   name: string
@@ -31,7 +30,6 @@ function getInitialValues(profile: ModelProfile | null): ModelProfileFormValues 
     apiKey: undefined,
     baseUrl: profile?.baseUrl ?? '',
     enabled: profile?.enabled ?? true,
-    executablePath: profile?.executablePath ?? 'codex',
     maxRuntimeSeconds: profile?.maxRuntimeSeconds,
     model: profile?.model ?? '',
     name: profile?.name ?? '',
@@ -145,13 +143,6 @@ export default function ModelProfileModal({
               { label: 'Chat Completions', value: 'CHAT' }
             ]}
           />
-        </Form.Item>
-        <Form.Item
-          label="Codex CLI 路径"
-          name="executablePath"
-          rules={[{ required: true, message: '请输入 Codex CLI 路径' }]}
-        >
-          <Input placeholder="codex" />
         </Form.Item>
         <Form.Item label="连接超时（秒）" name="timeoutSeconds">
           <InputNumber min={1} max={600} style={{ width: '100%' }} />

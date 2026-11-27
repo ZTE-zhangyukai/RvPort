@@ -60,6 +60,10 @@ class MigrationRepoServiceTests {
                 .hasMessageContaining("type 'robot'");
         assertThatThrownBy(() -> svc.commit(repo, "manual", "init", "rvport-init", "not-a-reason", true))
                 .hasMessageContaining("reason 'not-a-reason'");
+        assertThatThrownBy(() -> svc.commit(repo, "manual", "not-a-stage", "rvport-init", "first-init", true))
+                .hasMessageContaining("stage 'not-a-stage'");
+        assertThatThrownBy(() -> svc.commit(repo, "manual", "init", "not-a-src", "first-init", true))
+                .hasMessageContaining("src 'not-a-src'");
         // migration-rollback 仅允许 rvport-boundary src 专用通道
         assertThatThrownBy(() -> svc.commit(repo, "marker", "marker", "rvport-agent", "migration-rollback", true))
                 .hasMessageContaining("reason 'migration-rollback'");

@@ -254,6 +254,10 @@ public class AiMigrationAgentRuntime {
             enforceDiffScope(baseline, source, entryFiles, context);
             Path resultFile = workspace.resolve("output/migration_result.json");
             if (!Files.isRegularFile(resultFile, LinkOption.NOFOLLOW_LINKS) || Files.size(resultFile) > MAX_RESULT_BYTES) {
+                // 结果文件缺失/超大时把模型输出摘录进日志：退出码为 0 但未按合同执行
+                // （模型用文本应答而不发起工具调用）的场景，只有这里能提供诊断依据。
+                context.log(TaskLogType.STDERR, "AGENT_RESULT_FILE_MISSING stdout_excerpt="
+                        + excerptOf(execution.mergedOutput()));
                 throw new IOException("AGENT_OUTPUT_INVALID");
             }
             AiMigrationResultValidator.Result result;
@@ -408,9 +412,9 @@ public class AiMigrationAgentRuntime {
         Path promptFile = workspace.resolve(".prompt.txt");
         Files.writeString(promptFile, containerPrompt(), StandardCharsets.UTF_8);
         Map<String, String> environment = new LinkedHashMap<>();
-        environment.put("WXAI_API_KEY", config.model().apiKey());
-        environment.put("WXAI_MODEL", config.model().model());
-        environment.put("WXAI_BASE_URL", config.model().baseUrl());
+        environment.put("API_KEY", config.model().apiKey());
+        environment.put("MODEL", config.model().model());
+        environment.put("BASE_URL", config.model().baseUrl());
         cn.rvport.backend.ai.migration.executor.ExecutorContainerResult result = executorContainers.execute(
                 taskId, workspace, hostWorkspace(workspace), environment,
                 cn.rvport.backend.ai.migration.executor.ExecutorContainerService.CancellationToken.none(),
@@ -488,8 +492,11 @@ public class AiMigrationAgentRuntime {
     }
 
     /**
-     * 全量物化后的授权面守卫：相对 baseline 的改动必须落在条目涉及的文件集合内
-     * （`.migrate_verify/` 验证产物除外）。越界即失败——不静默吞掉，也绝不把越界改动带进补丁。
+     * 全量物化后的 diff 范围审计：相对 baseline 的改动若超出条目涉及的文件集合
+     * （`.migrate_verify/` 验证产物除外），**记日志告警但不阻断**——真实迁移天然
+     * 需要新建实现文件与更新构建配置（Makefile/CMakeLists），超出条目集合是正常
+     * 形态；真正的授权面由"只写 source/、baseline 不可覆盖、符号链接拒绝、
+     * diff 人工可审"共同承担。
      */
     private void enforceDiffScope(Path baseline, Path source, java.util.Set<String> entryFiles,
             TaskExecutionContext context) throws IOException {
@@ -511,19 +518,19 @@ public class AiMigrationAgentRuntime {
                 }
             }
         }
-        List<String> violations = new ArrayList<>();
+        List<String> beyond = new ArrayList<>();
         for (String path : changed) {
             String normalized = path.replace('\\', '/');
             if (normalized.equals(".migrate_verify") || normalized.startsWith(".migrate_verify/")) {
                 continue;
             }
             if (!entryFiles.contains(normalized)) {
-                violations.add(normalized);
+                beyond.add(normalized);
             }
         }
-        if (!violations.isEmpty()) {
-            context.log(TaskLogType.STDERR, "AI_MIGRATION_DIFF_SCOPE_VIOLATED " + String.join(",", violations));
-            throw new IOException("AI_MIGRATION_DIFF_SCOPE_VIOLATED");
+        if (!beyond.isEmpty()) {
+            context.log(TaskLogType.STDOUT, "AI_MIGRATION_DIFF_SCOPE_NOTE 条目外改动: "
+                    + String.join(",", beyond));
         }
     }
 
@@ -724,6 +731,14 @@ public class AiMigrationAgentRuntime {
                 并在该条目验证通过后删除该目录；最终 diff 中不得出现 .migrate_verify/ 与编译中间产物。
                 不要安装系统包或访问网络；工具链确实缺失时对应条目保持 PENDING 并说明原因。
                 """ + PROMPT_CONTRACT;
+    }
+
+    /** 字符串摘录：模型输出可能很长或为 null，截断到 2000 字符便于日志定位。 */
+    static String excerptOf(String text) {
+        if (text == null || text.isBlank()) {
+            return "(模型无输出)";
+        }
+        return text.length() > 2000 ? text.substring(0, 2000) + "..." : text;
     }
 
     static String excerpt(Path file) throws IOException {

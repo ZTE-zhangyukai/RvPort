@@ -79,7 +79,6 @@ describe('profile form ownership', () => {
       [{ name: '新模型名称' }, 'Profile 名称', '新模型名称'],
       [{ baseUrl: 'https://next.invalid/v1' }, '模型 API 地址', 'https://next.invalid/v1'],
       [{ model: 'model-v2' }, '模型名称', 'model-v2'],
-      [{ executablePath: '/usr/bin/codex' }, 'Codex CLI 路径', '/usr/bin/codex'],
       [{ timeoutSeconds: 60 }, '连接超时（秒）', '60'],
       [{ maxRuntimeSeconds: 600 }, '最大执行时长（秒）', '600']
     ]
@@ -97,7 +96,6 @@ describe('profile form ownership', () => {
         expect.objectContaining({
           name: '新模型名称',
           model: 'model-v2',
-          executablePath: '/usr/bin/codex',
           timeoutSeconds: 60,
           maxRuntimeSeconds: 600,
           apiKey: undefined
@@ -113,7 +111,6 @@ describe('profile form ownership', () => {
     view.rerender(<ModelProfileModal {...props} profile={null} />)
     expect(screen.getByText('新增模型 Profile')).toBeInTheDocument()
     expect(screen.getByLabelText('Profile 名称')).toHaveValue('')
-    expect(screen.getByLabelText('Codex CLI 路径')).toHaveValue('codex')
     expect(screen.queryByText('已配置密钥，留空则保持不变。')).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /取\s*消/ }))
     expect(cancel).toHaveBeenCalledOnce()

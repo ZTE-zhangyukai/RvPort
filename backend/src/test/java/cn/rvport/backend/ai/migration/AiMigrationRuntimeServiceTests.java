@@ -273,4 +273,11 @@ class AiMigrationRuntimeServiceTests {
                 "原因", "src/a.c", 1, 1, "sym", Map.of("scannerFindingId", scannerId, "factKind", factKind,
                         "actionable", true), "建议", "fp", "DETECTED", null);
     }
+
+    @Test
+    void 模型连接缺失的IO异常翻译为业务错误码() {
+        var translated = service.translate(new java.io.IOException("AI_MIGRATION_MODEL_NOT_CONFIGURED"));
+        assertThat(translated.errorCode()).isEqualTo(TaskErrorCode.AI_MIGRATION_MODEL_NOT_CONFIGURED);
+        assertThat(translated.getMessage()).contains("模型配置").contains("Model Configuration");
+    }
 }

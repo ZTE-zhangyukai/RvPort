@@ -63,7 +63,7 @@ describe('model stage binding view', () => {
       expect(model.agentRuntimesQuery.refetch).toHaveBeenCalledOnce()
       model = { ...model, [field]: { ...model[field], isError: false } }
       view.rerender(<Binding model={model} />)
-      expect(screen.getAllByRole('button', { name: /立即配置/ })).toHaveLength(2)
+      expect(screen.getAllByRole('button', { name: /立即配置/ })).toHaveLength(3)
     }
   )
 
@@ -101,14 +101,14 @@ describe('model stage binding view', () => {
     }
     view.rerender(<Binding model={model} />)
     for (const input of within(section).getAllByRole('combobox')) expect(input).toBeDisabled()
-    expect(screen.getByRole('button', { name: /立即配置/ })).toBeDisabled()
+    expect(within(screen.getByRole('region', { name: 'AI 迁移' })).getByRole('button', { name: /立即配置/ })).toBeDisabled()
     model = { ...model, bindingMutation: { ...model.bindingMutation, isPending: false } }
     view.rerender(<Binding model={model} />)
     await userEvent.click(within(section).getByRole('button', { name: /取\s*消/ }))
     expect(model.setEditingStage).toHaveBeenLastCalledWith(null)
     const next = vi.fn()
     view.rerender(<Binding model={{ ...model, setEditingStage: next }} />)
-    await userEvent.click(screen.getByRole('button', { name: /立即配置/ }))
-    expect(next).toHaveBeenCalledWith('KB_AI_EXTENSION')
+    await userEvent.click(within(screen.getByRole('region', { name: 'AI 迁移' })).getByRole('button', { name: /立即配置/ }))
+    expect(next).toHaveBeenCalledWith('AI_MIGRATION')
   })
 })
